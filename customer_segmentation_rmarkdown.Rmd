@@ -1,0 +1,67 @@
+---
+title: "Customer Segmentation of Retail e-commerce Business"
+author: "By Leonardo Castro"
+output: 
+  html_document:
+    fig_caption: true
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Customer segmentation is the process of separating customers into groups on the basis of their shared behavior or other attributes. The overall aim of this process is to identify high-value customer base i.e. customers that have the highest growth potential or are the most profitable.
+
+# **Business Understanding**
+
+## Case Statement
+
+Retail is the process of selling consumer goods or services to customers through multiple channels of distribution to earn a profit. In this context, *Congos* is an e-commerce retail store located in Costa Rica. They are specialized in selling home articles like beds, couches, stoves, fridges, smart TV, to mention a few. 
+
+Business Development and Marketing Teams are creating new strategies to increase substantially company's income by year 2023 as the company is getting more investment in order to keep growing and make bigger its product catalog. 
+
+There is data from over 23 000 transactions made during 2020 and 2021. This valuable asset (**raw data**) can be converted into a powerful knowledge resource by converting it into a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
+
+## Objective
+
+The **objective** of this analysis is to model and differentiate the characteristics and typologies of the Congos' customers in order to  increase marketing efficiency by directing effort specifically toward the designated segment in a manner consistent with that segment’s characteristics.
+
+
+## Business Benefit
+
+  * To help to Business Development and Marketing Teams to develop tailor-made marketing campaigns and differentiation strategies based on the characteristics of each customer.
+  
+## Scope
+
+This analysis parts from the hypothesis that all the customers being analyzed are trusted customers, for hence, eligible customers to get a loan. I am not analyzing whether the customers are good or bad payers.
+
+Also I want to clarify all the insights come strictly from the data and not from subjective opinion. However, we should have opinion from a Subject Matter Expert (SME) to get better understanding of some policies or rules on loan and fin-tech business.
+
+## Key Business Questions
+
+  * How much customers spend every month?
+  * What is the expected accuracy or confidence of the model developed?
+  * What is the most important variable/s which defines if a customer will get a loan customer?
+
+## Expected Outcomes
+
+  * To obtain an accurate model which can predict prospective customers likely to get a personal loan.
+  * To know which variables or characteristics are the most important to know in order to convert a new customer into a personal loan customer.
+  
+# **Methodology & Analytics Techniques Used**
+
+  * Data understanding
+  * Data cleaning and preparation.
+  * Exploratory data analysis.
+  * Data splitting (training/test).
+  * Machine Learning Classification Models:
+    * Logistic Regression.
+    * Classification Trees.
+    * Random Forest.
+    * K-Nearest Neighbors.
