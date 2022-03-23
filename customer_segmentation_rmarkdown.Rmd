@@ -18,24 +18,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Customer segmentation is the process of separating customers into groups on the basis of their shared behavior or other attributes. The overall aim of this process is to identify high-value customer base i.e. customers that have the highest growth potential or are the most profitable.
 
+The customer segmentation process allows a company to achieve many things. The most common application is to allow marketers to target marketing campaigns at specific customers to achieve a given marketing goal, such as reactivating lapsed customers or encouraging customers to purchase an additional item.
+
 # **Business Understanding**
 
 ## Case Statement
 
-Retail is the process of selling consumer goods or services to customers through multiple channels of distribution to earn a profit. In this context, *Congos* is an e-commerce retail store located in Costa Rica. They are specialized in selling home articles like beds, couches, stoves, fridges, smart TV, to mention a few. 
+Retail is the process of selling consumer goods or services to customers through multiple channels of distribution to earn a profit. In this context, *Congos* is an e-commerce retail store based in Costa Rica. They are specialized in selling furniture and home appliances like beds, couches, stoves, fridges, smart TVs, to mention a few. 
 
-Business Development and Marketing Teams are creating new strategies to increase substantially company's income by year 2023 as the company is getting more investment in order to keep growing and make bigger its product catalog. 
+Business Development and Marketing Teams are creating new strategies to increase substantially company's income as they are getting more investment in order to keep growing and make bigger its product catalog. 
 
-There is data from over 23 000 transactions made during 2020 and 2021. This valuable asset (**raw data**) can be converted into a powerful knowledge resource by converting it into a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
+There is data from over 23 000 transactions made during 2018 and 2019. This valuable asset (**raw data**) can be converted into a powerful knowledge resource by converting it into a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
 
 ## Objective
 
-The **objective** of this analysis is to model and differentiate the characteristics and typologies of the Congos' customers in order to  increase marketing efficiency by directing effort specifically toward the designated segment in a manner consistent with that segment’s characteristics.
+The **objective** of this analysis is to model and differentiate the characteristics and typologies of the Congos' customers in order to  increase marketing efficiency by directing efforts specifically toward the designated segment in a manner consistent and smart.
 
 
 ## Business Benefit
 
-  * To help to Business Development and Marketing Teams to develop tailor-made marketing campaigns and differentiation strategies based on the characteristics of each customer.
+To help Business Development and Marketing Teams to develop tailor-made marketing campaigns and differentiation strategies based on the characteristics of each customer.
   
 ## Scope
 
@@ -45,14 +47,13 @@ Also I want to clarify all the insights come strictly from the data and not from
 
 ## Key Business Questions
 
-  * How much customers spend every month?
+  * How much do customers spend every month?
   * What is the expected accuracy or confidence of the model developed?
   * What is the most important variable/s which defines if a customer will get a loan customer?
 
 ## Expected Outcomes
 
-  * To obtain an accurate model which can predict prospective customers likely to get a personal loan.
-  * To know which variables or characteristics are the most important to know in order to convert a new customer into a personal loan customer.
+To understand the customer segmentation analysis by characterizing each segment and providing recommendations based on segment profile.
   
 # **Methodology & Analytics Techniques Used**
 
@@ -65,3 +66,90 @@ Also I want to clarify all the insights come strictly from the data and not from
     * Classification Trees.
     * Random Forest.
     * K-Nearest Neighbors.
+    
+```{r load packages, warning=FALSE, message=FALSE}
+#These are the R packages used for the analysis.
+library(readxl)
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+```
+    
+    
+## Data Understanding
+
+  * Data consists in Congos' transactions made by customers during the period of 2018-04-01 and 2019-09-28.
+  * Data is anonymized and it was provided during a Data Analytics course. You can downloaded here directly from my GitHub repo [**here.**](https://github.com/leoncasba/Customer_Segmentation_ecommerce/blob/main/Customer_Segmentation.xlsx)
+  * The data set has 12 columns and 23208 rows.
+  * Data dictionary:
+    * **TransactionNumber:** transaction unique identifier.
+    * **Year:** year transactions has been made.
+    * **Month:** month transactions has been made.
+    * **Day:** day transactions has been made.
+    * **Customer_Code:** customer's unique identification code.
+    * **Name:** customer name.
+    * **Age:** customer's age.
+    * **Product_Code:** product unique identifier code.
+    * **Product_Name:** product name.
+    * **Unit_Product_Price:** product price per unit ($).
+    * **Quantity_Bought:** number of product units bought in each transaction. 
+ 
+    ```{r}
+#Read database
+data <- read_excel("Customer_Segmentation.xlsx")
+
+#Head 5 first rows from database
+kable(head(data,5),  caption="**Table 1.** First five rows from bank database.")
+
+```    
+
+## Data Cleaning and Preparation.
+
+Findings and actions:
+
+  * There are not missing values on the database.
+  * Variables are being correctly recognized as numeric and character depending on its nature.
+  * Having a complete transaction date would be easier and better to manipulate for the analysis, so I proceed creating this variable.
+  * Categorical variables have been read as numerical, so I proceed converting them to factor, as we need it for the further steps.
+  * Some variables are no longer suitable for the analysis: *Year*, *Month* and *Day* (Transaction_Date has been created). Also customer's *name* does not provided any valuable information. I proceed eliminating those variables.
+  
+```{r}
+#Function to get percentage of missing values
+NAporcent <- function(x, ndec=2){
+  porcent=(sum(is.na(x))/length(x))*100
+  p2 = round(porcent, digits=ndec)
+}
+
+#Look if there are missing values
+sum(apply(data, 2, NAporcent))
+
+#Check variables' nature
+summary(data)
+```
+
+
+```{r}
+#Create TransactionDate
+data$TransactionDate = ymd(paste0(data$Year,"-",data$Month,"-",data$Day))
+class(data$TransactionDate) #check is date type
+
+#Eliminate variables no longer necessary in the analysis
+data_prepared <- data[ , -c(2, 3, 4, 6)]  
+```
+  
+## Exploratory Data Analysis
+
+  * **How many product has been sold every month??**
+  
+```{r}
+q1 <- data_prepared %>% 
+  group_by(yearr = year(TransactionDate), month = month(TransactionDate)) %>% 
+  summarise(total_quantity = sum(Quantity_Bought))
+
+ggplot(q1, aes(x=month, y=total_quantity))+geom_line()
+```
+  
+  
+  * **How much do customers spend every month?**
