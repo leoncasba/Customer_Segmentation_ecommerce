@@ -1,5 +1,5 @@
 ---
-title: "Customer Segmentation of Retail e-commerce Business"
+title: "Customer Segmentation on Retail E-commerce Business"
 author: "By Leonardo Castro"
 output: 
   html_document:
@@ -14,7 +14,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
+# **Introduction**
 
 Customer segmentation is the process of separating customers into groups on the basis of their shared behavior or other attributes. The overall aim of this process is to identify high-value customer base i.e. customers that have the highest growth potential or are the most profitable.
 
@@ -24,11 +24,11 @@ The customer segmentation process allows a company to achieve many things. The m
 
 ## Case Statement
 
-Retail is the process of selling consumer goods or services to customers through multiple channels of distribution to earn a profit. In this context, *Congos* is an e-commerce retail store based in Costa Rica. They are specialized in selling furniture and home appliances like beds, couches, stoves, fridges, smart TVs, to mention a few. 
+Retail is the process of selling consumer goods or services to customers through multiple channels of distribution to earn a profit. In this context, *Congos* is an e-commerce retail startup based in Costa Rica. They are specialized in selling furniture and home appliances like beds, couches, stoves, fridges, smart TVs, to mention a few. 
 
 Business Development and Marketing Teams are creating new strategies to increase substantially company's income as they are getting more investment in order to keep growing and make bigger its product catalog. 
 
-There is data from over 23 000 transactions made during 2018 and 2019. This valuable asset (**raw data**) can be converted into a powerful knowledge resource by converting it into a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
+There is data from over 23 000 *Congos'* transactions made during 2018 and 2019, its first two years of acting in the e-commerce market. This valuable asset (**raw data**) can be converted into a powerful knowledge resource by converting it into a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
 
 ## Objective
 
@@ -60,7 +60,7 @@ To understand the customer segmentation analysis by characterizing each segment 
   * Data understanding
   * Data cleaning and preparation.
   * Exploratory data analysis.
-  * Data splitting (training/test).
+  * RFM Analysis.
   * Machine Learning Classification Models:
     * Logistic Regression.
     * Classification Trees.
@@ -74,7 +74,6 @@ library(knitr)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
-
 ```
     
     
@@ -141,15 +140,42 @@ data_prepared <- data[ , -c(2, 3, 4, 6)]
   
 ## Exploratory Data Analysis
 
-  * **How many product has been sold every month??**
+  * **How much has been sold every month by year??**
+  
+As we can see on **Figure 1**, revenue is quite different by year. On 2018, sales peak occurred during February and August, reaching almost the 1200k $. In the other hand, during 2019 May was a year which sales increased significantly regarding the previous year, in around 200K more, probably product of some kind of promotion occurred during this month. Therefore the business team can replicate the success of sales strategies in this month to be implemented in other months.
+  
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 1.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
+q1 <- data_prepared %>% group_by(year(TransactionDate), month(TransactionDate)) %>% summarize(total=sum(Unit_Product_Price*Quantity_Bought)) %>% rename(Year='year(TransactionDate)', Month='month(TransactionDate)', Total=total)
+
+ggplot(q1, aes(x=factor(Month), y=(Total/1000), group=factor(Year), colour=factor(Year)))+geom_line(size=1.5)+ geom_point(size=3) +
+  labs(y="Total revenue ($ thousands)", x="Month", colour="Year") +theme_classic(base_size = 18)
+```
+
+  * **Which are the top 10 products by total revenue?**
+  
+**Figure 2** shows top 10 products by total revenue. Highlighted in red are the top three products: Dryer Machine, King Size Bed and Individual Bed, which have reached a total revenue over 3 Million dollars and 4 Million dollars in the case of the Dryer Machine. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting marketing campaigns to its customers after knowing the segmentation.
+  
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 2.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
+q3 <- data_prepared %>% group_by(Product_Name) %>% summarise(Total_Revenue_by_Product=sum(Unit_Product_Price*Quantity_Bought)/1000) %>% arrange(desc(Total_Revenue_by_Product)) %>% top_n(10)
+
+ggplot(q3, aes(x=reorder(factor(Product_Name),Total_Revenue_by_Product), y=Total_Revenue_by_Product, fill = ifelse(Product_Name == c("Dryer Machine", "King Size Bed", "Individual Bed"), "Highlighted", "Normal") ))+geom_col()+theme_classic()+coord_flip()+theme(legend.position = "none", axis.title.y = element_blank())+
+  labs(y="Total revenue by product ($ thousands)")
+```
+
+## Recency Frequency Monetary (RFM) Analysis
+
+RFM analysis allows to segment customers by the frequency and value of purchases and identify those customers who spend the most money.
+
+  * **Recency** means how long it’s been since a customer bought something from us.
+  * **Frequency** represents how often a customer buys from us.
+  * **Monetary value** is the total value of purchases a customer has made.
   
 ```{r}
-q1 <- data_prepared %>% 
-  group_by(yearr = year(TransactionDate), month = month(TransactionDate)) %>% 
-  summarise(total_quantity = sum(Quantity_Bought))
+NOW=max(data_prepared$TransactionDate)
+#The last transaction date is 2019-12-28, we will use this date to calculate Recency.
 
-ggplot(q1, aes(x=month, y=total_quantity))+geom_line()
+#Recency
+
+recency <- data_prepared %>% group_by(Customer_Code) %>% summarise(Recency=(NOW-max(TransactionDate)))
 ```
-  
-  
-  * **How much do customers spend every month?**
+
