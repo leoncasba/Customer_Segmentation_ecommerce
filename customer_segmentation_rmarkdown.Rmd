@@ -83,21 +83,20 @@ library(lubridate)
   * Data is anonymized and it was provided during a Data Analytics course. You can downloaded here directly from my GitHub repo [**here.**](https://github.com/leoncasba/Customer_Segmentation_ecommerce/blob/main/Customer_Segmentation.xlsx)
   * The data set has 12 columns and 23208 rows.
   * Data dictionary:
-    * **TransactionNumber:** transaction unique identifier.
+    * **Transaction:** transaction unique number identifier.
     * **Year:** year transactions has been made.
     * **Month:** month transactions has been made.
     * **Day:** day transactions has been made.
     * **Customer_Code:** customer's unique identification code.
-    * **Name:** customer name.
     * **Age:** customer's age.
     * **Product_Code:** product unique identifier code.
     * **Product_Name:** product name.
-    * **Unit_Product_Price:** product price per unit ($).
-    * **Quantity_Bought:** number of product units bought in each transaction. 
+    * **Product_Price:** product price per unit ($).
+    * **Quantity:** number of product units bought in each transaction. 
  
     ```{r}
 #Read database
-data <- read_excel("Customer_Segmentation.xlsx")
+data <- read_excel("Customer_Segmentation2.xlsx")
 
 #Head 5 first rows from database
 kable(head(data,5),  caption="**Table 1.** First five rows from bank database.")
@@ -112,7 +111,7 @@ Findings and actions:
   * Variables are being correctly recognized as numeric and character depending on its nature.
   * Having a complete transaction date would be easier and better to manipulate for the analysis, so I proceed creating this variable.
   * Categorical variables have been read as numerical, so I proceed converting them to factor, as we need it for the further steps.
-  * Some variables are no longer suitable for the analysis: *Year*, *Month* and *Day* (Transaction_Date has been created). Also customer's *name* does not provided any valuable information. I proceed eliminating those variables.
+  * Some variables are no longer suitable for the analysis: *Year*, *Month* and *Day* (Transaction_Date has been created). I proceed eliminating those variables.
   
 ```{r}
 #Function to get percentage of missing values
@@ -135,7 +134,7 @@ data$TransactionDate = ymd(paste0(data$Year,"-",data$Month,"-",data$Day))
 class(data$TransactionDate) #check is date type
 
 #Eliminate variables no longer necessary in the analysis
-data_prepared <- data[ , -c(2, 3, 4, 6)]  
+data_prepared <- data[ , -c(2, 3, 4)]  
 ```
   
 ## Exploratory Data Analysis
@@ -145,7 +144,7 @@ data_prepared <- data[ , -c(2, 3, 4, 6)]
 As we can see on **Figure 1**, revenue is quite different by year. On 2018, sales peak occurred during February and August, reaching almost the 1200k $. In the other hand, during 2019 May was a year which sales increased significantly regarding the previous year, in around 200K more, probably product of some kind of promotion occurred during this month. Therefore the business team can replicate the success of sales strategies in this month to be implemented in other months.
   
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 1.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
-q1 <- data_prepared %>% group_by(year(TransactionDate), month(TransactionDate)) %>% summarize(total=sum(Unit_Product_Price*Quantity_Bought)) %>% rename(Year='year(TransactionDate)', Month='month(TransactionDate)', Total=total)
+q1 <- data_prepared %>% group_by(year(TransactionDate), month(TransactionDate)) %>% summarize(total=sum(Product_Price*Quantity)) %>% rename(Year='year(TransactionDate)', Month='month(TransactionDate)', Total=total)
 
 ggplot(q1, aes(x=factor(Month), y=(Total/1000), group=factor(Year), colour=factor(Year)))+geom_line(size=1.5)+ geom_point(size=3) +
   labs(y="Total revenue ($ thousands)", x="Month", colour="Year") +theme_classic(base_size = 18)
@@ -156,26 +155,63 @@ ggplot(q1, aes(x=factor(Month), y=(Total/1000), group=factor(Year), colour=facto
 **Figure 2** shows top 10 products by total revenue. Highlighted in red are the top three products: Dryer Machine, King Size Bed and Individual Bed, which have reached a total revenue over 3 Million dollars and 4 Million dollars in the case of the Dryer Machine. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting marketing campaigns to its customers after knowing the segmentation.
   
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 2.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
-q3 <- data_prepared %>% group_by(Product_Name) %>% summarise(Total_Revenue_by_Product=sum(Unit_Product_Price*Quantity_Bought)/1000) %>% arrange(desc(Total_Revenue_by_Product)) %>% top_n(10)
+q3 <- data_prepared %>% group_by(Product_Name) %>% summarise(Total_Revenue_by_Product=sum(Product_Price*Quantity)/1000) %>% arrange(desc(Total_Revenue_by_Product)) %>% top_n(10)
 
-ggplot(q3, aes(x=reorder(factor(Product_Name),Total_Revenue_by_Product), y=Total_Revenue_by_Product, fill = ifelse(Product_Name == c("Dryer Machine", "King Size Bed", "Individual Bed"), "Highlighted", "Normal") ))+geom_col()+theme_classic()+coord_flip()+theme(legend.position = "none", axis.title.y = element_blank())+
-  labs(y="Total revenue by product ($ thousands)")
+ggplot(q3, aes(x=reorder(factor(Product_Name),Total_Revenue_by_Product), y=Total_Revenue_by_Product, fill = ifelse(Product_Name == "Laptop", "Highlighted", "Normal") ))+geom_col()+theme_classic(base_size = 18)+coord_flip()+theme(legend.position = "none", axis.title.y = element_blank())+labs(y="Total revenue by product ($ thousands)")
 ```
+  * How are distributed the customers around the country and what is the age group?
+  
+```{r}
+
+```
+  
+
+
 
 ## Recency Frequency Monetary (RFM) Analysis
 
 RFM analysis allows to segment customers by the frequency and value of purchases and identify those customers who spend the most money.
 
-  * **Recency** means how long it’s been since a customer bought something from us.
-  * **Frequency** represents how often a customer buys from us.
-  * **Monetary value** is the total value of purchases a customer has made.
+  * **Recency** means how long it’s been since a customer bought something from us (**days**).
+  * **Frequency** represents how often a customer buys from us (**number of purchases**).
+  * **Monetary value** is the total value of purchases a customer has made (**total amount in $**).
   
 ```{r}
 NOW=max(data_prepared$TransactionDate)
 #The last transaction date is 2019-12-28, we will use this date to calculate Recency.
 
 #Recency
-
-recency <- data_prepared %>% group_by(Customer_Code) %>% summarise(Recency=(NOW-max(TransactionDate)))
+RFM <- data_prepared %>% group_by(Customer_Code) %>% summarise(Recency=as.numeric(NOW-max(TransactionDate)), Frequency=n(), Monetary=sum(Quantity*Product_Price))
+head(RFM, 5)
 ```
+
+Once is done the RFM table, I split the metrics into segments using quantiles. I assigned a quantile "score" from 1 to 4 to each Recency, Frequency and Monetary respectively:
+
+  * 4 is the highest value (customer is on the top of the evaluated value), and 1 is the lowest value (customer is on the bottom of the evaluated variable).
+  * A final RFM score (Overall Value) is calculated simply by combining individual RFM score numbers:
+  
+$$RFM \ Score = R_{quartile} + F_{quartile} + M_{quartile}$$
+
+The table below show which means each segment and its respective marketing strategy according with its RFM score:
+
+<center>
+![](C:/Users/Leo/Desktop/Portfiolo/Customer_Segmentation_ecommerce/RFM_table.JPG)
+</center>
+
+
+
+```{r}
+apply(RFM[,-1] , 2, quantile)
+```
+
+
+```{r}
+quantiles <- apply(RFM[,-1] , 2, ntile, n=4)
+colnames(quantiles) <- c("R_quartile",	"F_quartile",	"M_quartile")
+RFM_q <- cbind(RFM, quantiles)
+RFM_q$RFM_score <- paste0(as.character(RFM_q$R_quartile),as.character(RFM_q$F_quartile),as.character(RFM_q$M_quartile))
+kable(head(RFM_q,5),  caption="**Table 2.** RFM table - Sample of five customers.")
+```
+
+
 
