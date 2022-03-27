@@ -96,7 +96,7 @@ library(lubridate)
  
     ```{r}
 #Read database
-data <- read_excel("Customer_Segmentation2.xlsx")
+data <- read_excel("Customer_Segmentation.xlsx")
 
 #Head 5 first rows from database
 kable(head(data,5),  caption="**Table 1.** First five rows from bank database.")
