@@ -93,6 +93,7 @@ library(lubridate)
     * **Product_Name:** product name.
     * **Product_Price:** product price per unit ($).
     * **Quantity:** number of product units bought in each transaction. 
+    
  
     ```{r}
 #Read database
@@ -141,7 +142,7 @@ data_prepared <- data[ , -c(2, 3, 4)]
 
   * **How much has been sold every month by year??**
   
-As we can see on **Figure 1**, revenue is quite different by year. On 2018, sales peak occurred during February and August, reaching almost the 1200k $. In the other hand, during 2019 May was a year which sales increased significantly regarding the previous year, in around 200K more, probably product of some kind of promotion occurred during this month. Therefore the business team can replicate the success of sales strategies in this month to be implemented in other months.
+As we can see on **Figure 1**, revenue differs by year but basically follows a similar pattern. Sales peak occurred during July for both years, being 2018 more successful, overpassing the 800k dollars, probably product of some kind of promotion occurred during this month. Also is interestingto notice there is a gap between years on May of around 50k dollars, being more successful May 2019. Business team can replicate the success of sales strategies in this month to be implemented in further campaigns.
   
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 1.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
 q1 <- data_prepared %>% group_by(year(TransactionDate), month(TransactionDate)) %>% summarize(total=sum(Product_Price*Quantity)) %>% rename(Year='year(TransactionDate)', Month='month(TransactionDate)', Total=total)
@@ -152,7 +153,7 @@ ggplot(q1, aes(x=factor(Month), y=(Total/1000), group=factor(Year), colour=facto
 
   * **Which are the top 10 products by total revenue?**
   
-**Figure 2** shows top 10 products by total revenue. Highlighted in red are the top three products: Dryer Machine, King Size Bed and Individual Bed, which have reached a total revenue over 3 Million dollars and 4 Million dollars in the case of the Dryer Machine. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting marketing campaigns to its customers after knowing the segmentation.
+**Figure 2** shows top 10 products by total revenue. Highlighted in red is the top product: Laptops. It has reached a total revenue over 3 Million dollars. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting product marketing campaigns to its customers after knowing the segmentation.
   
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 2.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
 q3 <- data_prepared %>% group_by(Product_Name) %>% summarise(Total_Revenue_by_Product=sum(Product_Price*Quantity)/1000) %>% arrange(desc(Total_Revenue_by_Product)) %>% top_n(10)
@@ -166,52 +167,73 @@ ggplot(q3, aes(x=reorder(factor(Product_Name),Total_Revenue_by_Product), y=Total
 ```
   
 
+## Recency Frequency Monetary Analysis
 
+Recency Frequency Monetary (RFM) analysis allows to segment customers by the frequency and value of purchases and identify those customers who spend the most money.
 
-## Recency Frequency Monetary (RFM) Analysis
-
-RFM analysis allows to segment customers by the frequency and value of purchases and identify those customers who spend the most money.
-
-  * **Recency** means how long it’s been since a customer bought something from us (**days**).
-  * **Frequency** represents how often a customer buys from us (**number of purchases**).
+  * **Recency** means how long it’s been since a customer bought any product (**days**).
+  * **Frequency** represents how often a customer buys  (**number of purchases**).
   * **Monetary value** is the total value of purchases a customer has made (**total amount in $**).
   
 ```{r}
 NOW=max(data_prepared$TransactionDate)
-#The last transaction date is 2019-12-28, we will use this date to calculate Recency.
+#The last transaction date is 2019-12-28, so I will use this date to calculate Recency.
 
-#Recency
+#Recency-Frequency-Monetary
 RFM <- data_prepared %>% group_by(Customer_Code) %>% summarise(Recency=as.numeric(NOW-max(TransactionDate)), Frequency=n(), Monetary=sum(Quantity*Product_Price))
 head(RFM, 5)
 ```
 
-Once is done the RFM table, I split the metrics into segments using quantiles. I assigned a quantile "score" from 1 to 4 to each Recency, Frequency and Monetary respectively:
-
-  * 4 is the highest value (customer is on the top of the evaluated value), and 1 is the lowest value (customer is on the bottom of the evaluated variable).
-  * A final RFM score (Overall Value) is calculated simply by combining individual RFM score numbers:
-  
-$$RFM \ Score = R_{quartile} + F_{quartile} + M_{quartile}$$
-
-The table below show which means each segment and its respective marketing strategy according with its RFM score:
-
-<center>
-![](C:/Users/Leo/Desktop/Portfiolo/Customer_Segmentation_ecommerce/RFM_table.JPG)
-</center>
-
-
+Once is done the RFM table, I split the metrics into segments using quantiles. 
 
 ```{r}
-apply(RFM[,-1] , 2, quantile)
+quantile_table <- (apply(RFM[,-1] , 2, quantile))
+kable(quantile_table,caption="**Table 2.** RFM table - Quantiles.")
 ```
 
+I assigned a quantile "score" from 1 to 4 to each *Recency*, *Frequency* and *Monetary* respectively, regarding its position:
+
+  * 4 is the highest value (customers is on the top of the evaluated value), and 1 is the lowest value (customer is on the bottom of the evaluated value).
+  * A final RFM score (Overall Value) is calculated simply by concatenating individual RFM score numbers:
+  
+$$RFM \ Score = R_{quartile} + F_{quartile} + M_{quartile}$$
 
 ```{r}
 quantiles <- apply(RFM[,-1] , 2, ntile, n=4)
 colnames(quantiles) <- c("R_quartile",	"F_quartile",	"M_quartile")
 RFM_q <- cbind(RFM, quantiles)
 RFM_q$RFM_score <- paste0(as.character(RFM_q$R_quartile),as.character(RFM_q$F_quartile),as.character(RFM_q$M_quartile))
-kable(head(RFM_q,5),  caption="**Table 2.** RFM table - Sample of five customers.")
+kable(head(RFM_q,5),  caption="**Table 3.** RFM scores table - Sample of five customers.")
 ```
+The table below (adapted from [**here.**](https://runawayhorse001.github.io/LearningApacheSpark/rfm.html)) show which means each segment and its respective marketing strategy according with its RFM score:
+
+<center>
+![](C:/Users/Leo/Desktop/Portfiolo/Customer_Segmentation_ecommerce/RFM_table.JPG)
+</center>
+
+
+Now it is possible to categorize each customer by its respective segment. **Figure 3** shows number of customers by segment, where..
+
+
+
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 3.** Number of customers by RFM segment (Excluding Category "Others").', message=FALSE, warning=FALSE}
+#Set each level to customers
+
+RFM_q$Category <-
+  ifelse(RFM_q$RFM_score == '144', "Best Customers",
+    ifelse(RFM_q$F_quartile == '4', "Loyal Customers",
+      ifelse(RFM_q$M_quartile == '4', "Big Spenders", 
+        ifelse(RFM_q$RFM_score == '333' | RFM_q$RFM_score == '444' | RFM_q$RFM_score == '433' , "Almost Lost", 
+          ifelse(RFM_q$RFM_score == '411', "Lost Cheap Customers", "Others")))))
+
+group <- RFM_q %>% group_by(Category) %>% summarize(N_Customers=n()) 
+group$Category <- factor(group$Category,                                   
+                  levels = group$Category[order(group$N_Customers, decreasing = TRUE)])
+
+ggplot(group[-6,], aes(x=Category, y=N_Customers))+geom_col(fill = "#0073C2FF")+theme_classic(base_size = 18)+labs(y="Number of Customers", x="Segment")+geom_text(aes(label = N_Customers), vjust = 2, cex=6, color = "white")
+
+```
+
 
 
 
