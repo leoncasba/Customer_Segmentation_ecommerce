@@ -61,11 +61,7 @@ To understand the customer segmentation analysis by characterizing each segment 
   * Data cleaning and preparation.
   * Exploratory data analysis.
   * RFM Analysis.
-  * Machine Learning Classification Models:
-    * Logistic Regression.
-    * Classification Trees.
-    * Random Forest.
-    * K-Nearest Neighbors.
+  * K-means Clustering
     
 ```{r load packages, warning=FALSE, message=FALSE}
 #These are the R packages used for the analysis.
@@ -73,6 +69,7 @@ library(readxl)
 library(knitr)
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 ```
     
@@ -177,7 +174,7 @@ Recency Frequency Monetary (RFM) analysis allows to segment customers by the fre
   
 ```{r}
 NOW=max(data_prepared$TransactionDate)
-#The last transaction date is 2019-12-28, so I will use this date to calculate Recency.
+#The last transaction date is 2019-12-28, 8so I will use this date to calculate Recency.
 
 #Recency-Frequency-Monetary
 RFM <- data_prepared %>% group_by(Customer_Code) %>% summarise(Recency=as.numeric(NOW-max(TransactionDate)), Frequency=n(), Monetary=sum(Quantity*Product_Price))
@@ -234,6 +231,74 @@ ggplot(group[-6,], aes(x=Category, y=N_Customers))+geom_col(fill = "#0073C2FF")+
 
 ```
 
+## K-means Clustering
+
+K-Means clustering is an unsupervised machine learning algorithm used to find homogeneous subgroups within a population. To process the learning data, the K-means algorithm starts with a first group of randomly selected centroids, which are used as the beginning points for every cluster, and then performs iterative (repetitive) calculations to optimize the positions of the centroids. It halts creating and optimizing clusters when either:
+
+  * The centroids have stabilized — there is no change in their values because the clustering has been successful.
+  * The defined number of iterations has been achieved.
+
+Before proceed with the K-Means algorithm, data preparation is required in order to obtain a good performance on the modeling, for hence, the input data requires:
+
+  * **1. No outliers.**
+  
+As we can see Frequency and Monetary variables have values over the interquartile range, however, nothing to be worried about, it seems like there is someone who represents a huge amount of monetary amount as well as several customers which buy really frequently. In the other side, recency shows multiple values out of the interquartile range, it seems like data distribution is skewed more than the existance of outliers, for hence, I will continue with the assumptions.
+  
+```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 4.** Box Plot - Looking for outliers").', message=FALSE, warning=FALSE}
+#Checking outliers
+pivot <- RFM %>% pivot_longer(Recency:Monetary)
+ggplot(data = pivot, aes(x=name, y=value)) + 
+             geom_boxplot(fill = "#0073C2FF")+facet_wrap( ~ name, scales="free")+theme_classic(base_size = 18)+labs(y="Value", x="Variables (R-F-M)")
 
 
+```
+
+  * Data has symmetric distribution of variables (it isn’t skewed).
+  
+As we can see on the figures below Frequency and Monetary Value have normal distribution, however recency is right-skewed as I assumed on the previous analysis. This means, data will need a transformation in order to use on further K-means algorithm.
+
+
+```{r, , fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 5.** Checking variables distribution").', message=FALSE, warning=FALSE}
+#Check distribution of each variable
+ggplot(RFM, aes(Recency))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Recency distribution")
+
+ggplot(RFM, aes(Frequency))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Frequency distribution")
+
+ggplot(RFM, aes(Monetary))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Monetary Value distribution")
+```
+ 
+```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 6.** Checking log transformed Recency data").', message=FALSE, warning=FALSE}
+#Checking distribution on log transformed recency data.  I added a small constant as log transformation demands all the values to be positive.
+ggplot(RFM, aes(log10(Recency+1)))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)
+
+#Creating matrix for next step: scaling
+RFM_2 <- cbind(RFM[, c(3,4)], (log10(RFM$Recency+1)))
+```
+
+  * Variables are on the same scale.
+  
+Since K-means algorithm works with euclidean distances we need to scalate the data. It means transforming data in order the mean is equal 1 and the standard deviation equal 1.
+
+```{r}
+#Scale values
+scaled_values <- apply(RFM_2, 2, scale, center = TRUE, scale = TRUE)
+
+#Check if are correctly scaled.
+apply(scaled_values, 2, mean)
+apply(scaled_values, 2, sd)
+```
+
+```{r}
+test = kmeans(scaled_values, centers=5, nstart=20)
+summary(test)
+#print(test$cluster)
+
+plot(scaled_values, col = test$cluster,
+     main = "k-means with 5 clusters", 
+     xlab = "", ylab = "")
+```
 
