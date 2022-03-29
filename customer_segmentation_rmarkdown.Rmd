@@ -1,5 +1,5 @@
 ---
-title: "Customer Segmentation on Retail E-commerce Business"
+title: "Customer Segmentation on Retail Business"
 author: "By Leonardo Castro"
 output: 
   html_document:
@@ -71,6 +71,8 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(lubridate)
+library(clusterSim)
+library(factoextra)
 ```
     
     
@@ -233,10 +235,16 @@ ggplot(group[-6,], aes(x=Category, y=N_Customers))+geom_col(fill = "#0073C2FF")+
 
 ## K-means Clustering
 
-K-Means clustering is an unsupervised machine learning algorithm used to find homogeneous subgroups within a population. To process the learning data, the K-means algorithm starts with a first group of randomly selected centroids, which are used as the beginning points for every cluster, and then performs iterative (repetitive) calculations to optimize the positions of the centroids. It halts creating and optimizing clusters when either:
+From previous RFM analysis we assume there about 5 group of clusters, however, there is a big amount of customers who remains in the "Other" categories. 
+
+K-means comes to provide a solution by grouping all the customers in their respective subgroups according with their homogeneous properties. This algorithm is an unsupervised machine learning method used to find homogeneous subgroups within a population. 
+
+To process the learning data, the K-means algorithm starts with a first group of randomly selected centroids, which are used as the beginning points for every cluster, and then performs iterative (repetitive) calculations to optimize the positions of the centroids. It halts creating and optimizing clusters when either:
 
   * The centroids have stabilized — there is no change in their values because the clustering has been successful.
   * The defined number of iterations has been achieved.
+  
+### Data pre-processing
 
 Before proceed with the K-Means algorithm, data preparation is required in order to obtain a good performance on the modeling, for hence, the input data requires:
 
@@ -281,124 +289,119 @@ RFM_2 <- cbind(RFM[, c(3,4)], (log10(RFM$Recency+1)))
 
   * Variables are on the same scale.
   
-Since K-means algorithm works with euclidean distances we need to scalate the data. It means transforming data in order the mean is equal 1 and the standard deviation equal 1.
+Since K-means algorithm works with euclidean distances we need to escalate the data. It means transforming data in order the mean is equal 1 and the standard deviation equal 1.
 
 ```{r}
 #Scale values
 scaled_values <- apply(RFM_2, 2, scale, center = TRUE, scale = TRUE)
-scale2 <- apply(RFM_2[, -1], 2, scale, center = TRUE, scale = TRUE)
-
 
 #Check if are correctly scaled.
 apply(scaled_values, 2, mean)
 apply(scaled_values, 2, sd)
 ```
 
-```{r}
-library(clusterSim)
-test4 = kmeans(scaled_values, centers=4, nstart=20)
-test2 = kmeans(scaled_values, centers=2, nstart=20)
-test3 = kmeans(scaled_values, centers=3, nstart=20)
-test5 = kmeans(scaled_values, centers=5, nstart=20)
-test6 = kmeans(scaled_values, centers=6, nstart=20)
-#print(test$cluster)
+### Selecting the optimum K (number of clusters) 
 
+The process of accessing the quality of clustering can be a tricky task. For that reason, I tried three different measures to determine the quality of clustering: Elbow Method, Davies-Bouldin Index and Silhouette Analysis. You can dive deep about how each of this measures work in [**this useful article.**](https://gdcoder.com/silhouette-analysis-vs-elbow-method-vs-davies-bouldin-index-selecting-the-optimal-number-of-clusters-for-kmeans-clustering/)
 
-k2 <- as_tibble(scaled_values) %>% mutate(cluster=test2$cluster)
-k3 <- as_tibble(scaled_values)  %>% mutate(cluster=test3$cluster)
-k4 <- as_tibble(scaled_values)  %>% mutate(cluster=test4$cluster)
-k5 <- as_tibble(scaled_values) %>% mutate(cluster=test5$cluster)
-k6 <- as_tibble(scaled_values) %>% mutate(cluster=test6$cluster)
+#### Elbow method
 
+Idea behind the elbow method is to identify the value of k where the score begins to decrease most rapidly before the curve reached a plateau. In the figure below, we can see it seems is around 3 or 4, however, it can get confusing and that is the reason we will explore further on the next measures.
 
-
-
-plot(scale2,
-     col = test$cluster,
-     main = paste("K-means clustering of Congos' customers with", 4, "clusters"),
-     xlab = "", ylab = "")
-
-i2 <- index.DB(k2, k2$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
-i3 <- index.DB(k3, k3$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
-i4 <- index.DB(k4, k4$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
-i5 <- index.DB(k5, k5$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
-i6 <- index.DB(k6, k5$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
-
-rbind(i2$DB, i3$DB, i4$DB, i5$DB, i6$DB)
-```
-
-
-```{r}
-# Initialize total within sum of squares error: wss
+```{r, , fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 7.** Elbow method for optimum K.', message=FALSE, warning=FALSE}
+# Initializing total within sum of squares error: wss
 wss <- 0
 
-# For 1 to 15 cluster centers
-for (i in 1:15) {
+# For 1 to 10 cluster centers, save total within sum of squares to wss variable
+for (i in 1:10) {
   test <- kmeans(scaled_values, centers = i, nstart = 20)
-  # Save total within sum of squares to wss variable
+  # 
   wss[i] <- test$tot.withinss
 }
 
 # Plot total within sum of squares vs. number of clusters
-plot(1:15, wss, type = "b", 
+plot(1:10, wss, type = "b", 
      xlab = "Number of Clusters", 
      ylab = "Within groups sum of squares")
 ```
 
+#### Davies-Bouldin Index
+  
+The minimum score is zero and the optimal clustering has the smallest Davies–Bouldin index value. As we can see on Table 4, the lowest Davies-Bouldin Index corresponds to k=4.
+
 ```{r}
-library(cluster)
-
-
-pam_k2 <- pam(scaled_values, k = 4)
-
-# Plot the silhouette visual for the pam_k2 model
-plot(silhouette(pam_k2))
-
-# Generate a k-means model using the pam() function with a k = 3
-pam_k3 <- pam(scaled_values, k = 3)
-
-# Plot the silhouette visual for the pam_k3 model
-plot(silhouette(pam_k3))
-
-```
-```{r}
-library(purrr)
-# Use map_dbl to run many models with varying value of k
-sil_width <- map_dbl(2:10,  function(k){
-  model <- pam(x = scaled_values, k = k)
-  model$silinfo$avg.width
-})
-
-# Generate a data frame containing both k and sil_width
-sil_df <- data.frame(
-  k = 2:10,
-  sil_width = sil_width
-)
-
-# Plot the relationship between k and sil_width
-ggplot(sil_df, aes(x = k, y = sil_width)) +
-  geom_line() +
-  scale_x_continuous(breaks = 2:10)
-```
-```{r}
-Label clusters
-set.seed(42)
-
-# Build a k-means model for the customers_spend with a k of 2
-model_customers <- kmeans(customers_spend, centers = 2)
-
-# Extract the vector of cluster assignments from the model
-clust_customers <- model_customers$cluster
-
-# Build the segment_customers data frame
-segment_customers <- mutate(customers_spend, cluster = clust_customers)
-
-# Calculate the size of each cluster
-count(segment_customers, cluster)
-
-# Calculate the mean for each category
-segment_customers %>% 
-  group_by(cluster) %>% 
-  summarise_all(list(mean))
+#First we set the random seed
+set.seed(1995)
+#I calculate kmeans using k values from 3 to 6
+lst1 <- lapply(3:6, function(i) kmeans(scaled_values, centers=i, nstart = 20))
+names(lst1) <- paste0("cluster_", 3:6)
+#Store cluster results in a tibble
+k_ <- as_tibble(scaled_values) %>% mutate(k3=unlist(lst1$cluster_3[1]), k4=unlist(lst1$cluster_4[1]), k5=unlist(lst1$cluster_5[1]), k6=unlist(lst1$cluster_6[1])) 
+#Calculate Davies-Boulding Index
+index_DB <- lapply(4:7, function(i) index.DB(k_, k_[,i], d=NULL, centrotypes="centroids", p=2, q=2))
+names(index_DB) <- paste0("index_cluster_k", 3:6)
+#Comparing DB Index for each k tried
+DB_index <- rbind(index_DB$index_cluster_k3[1], index_DB$index_cluster_k4[1], index_DB$index_cluster_k5[1], index_DB$index_cluster_k6[1])
+DB_index_ <- as_tibble(unlist(DB_index))
+DB_index_$k <- c(3, 4, 5, 6)
+kable(DB_index_, digits=2, col.names=c("DB index", "Number of clusters"), caption="**Table 4.** Davies-Bouldin Index Values.")
 ```
 
+#### Silhouette Analysis
+
+When using the the silhouette analysis we are normally looking for a value of k that provides the high average silhouette score, however, in this case the figure shows is k=2. However, I will follow to logic presented by the previous two metrics which make more sense on the context of the problem I'm solving.
+
+```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 8.** Silhouette method for optimum K.', message=FALSE, warning=FALSE}
+fviz_nbclust(scaled_values, pam, method = "silhouette")+ theme_classic()
+```
+
+## K-means Results & Interpretation
+
+I defined k=4 as the optimum number of clusters and applied the algorithm to the data, getting the results below:
+
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 9.** Cluster plot.', message=FALSE, warning=FALSE}
+set.seed(1995)
+k_definitive <- kmeans(scaled_values, centers=4, nstart = 20)
+
+fviz_cluster(k_definitive, data = scaled_values,
+             palette = c("#2E9FDF", "#00AFBB", "#E7B800", "#FF0000"), 
+             geom = "point",
+             ellipse.type = "convex", 
+             ggtheme = theme_classic(base_size = 18),
+             main = ""
+             )
+```
+
+Now the clusters are defined it is time to label the customers with its corresponding cluster. For that I use the mean to evaluate each cluster and provide an interpretation of the clusters formed using k-means.
+
+```{r}
+# Extracting the vector of cluster assignments from the model
+clust_customers <- k_definitive$cluster
+# Building the segment_customers data frame
+RFM_k_clusters <- mutate(RFM, Cluster = clust_customers)
+# Calculating the size of each cluster
+count <- count(RFM_k_clusters, Cluster)
+# Calculating the mean for each category+adding count column
+RFM_final <- RFM_k_clusters[,-1] %>% 
+  group_by(Cluster) %>% 
+  summarise_all(list(mean)) %>% mutate(N=count$n, Percentage=((count$n)/sum(count$n)*100))
+```
+
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 10.** Number of customer by K-means cluster.', message=FALSE, warning=FALSE}
+RFM_final$Cluster <- factor(RFM_final$Cluster,                                   
+                  levels = RFM_final$Cluster[order(RFM_final$N, decreasing = TRUE)])
+
+ggplot(RFM_final, aes(x=as.factor(Cluster), y=N))+geom_col(fill = "#0073C2FF")+theme_classic(base_size = 18)+labs(y="Number of Customers", x="Cluster")+geom_text(aes(label = N), vjust = 2, cex=6, color = "white")
+```
+```{r}
+kable(RFM_final, digits=2)
+```
+This is the interpretation provided to the k-means clusters:
+
+  * **Cluster 2** has 19.07% of the total customers. It belongs to the "Loyal Customers" segment as despite they haven’t purchased for a while (in average 19 days) is still a little time, and they used to purchase frequently (F=2) and spent a lot (R=2, F=4, M=4).
+
+  * **Cluster 2** has 21.16% customers. It belongs to "Alomost Lost". They purchase recently (R=2). However they do not purchase frequently and do not spent a lot. (R=2, F=3, M=3)
+
+"Cluster 2" has 30% customers. It can be interpreted as "Lost Cheap Customers". Their last purchase is long ago (R=4), purchased very few (F=4) and spent little (M=4). (R=4, F=4, M=4)
+
+"Cluster 3" has 21% customers. It belongs to the "Best Customers" segment which we saw earlier as they purchase recently (R=1), frequent buyers (F=1), and spent the most (M=1). (R=1, F=1, M=1)
