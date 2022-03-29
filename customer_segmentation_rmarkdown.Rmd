@@ -286,6 +286,8 @@ Since K-means algorithm works with euclidean distances we need to scalate the da
 ```{r}
 #Scale values
 scaled_values <- apply(RFM_2, 2, scale, center = TRUE, scale = TRUE)
+scale2 <- apply(RFM_2[, -1], 2, scale, center = TRUE, scale = TRUE)
+
 
 #Check if are correctly scaled.
 apply(scaled_values, 2, mean)
@@ -293,12 +295,110 @@ apply(scaled_values, 2, sd)
 ```
 
 ```{r}
-test = kmeans(scaled_values, centers=5, nstart=20)
-summary(test)
+library(clusterSim)
+test4 = kmeans(scaled_values, centers=4, nstart=20)
+test2 = kmeans(scaled_values, centers=2, nstart=20)
+test3 = kmeans(scaled_values, centers=3, nstart=20)
+test5 = kmeans(scaled_values, centers=5, nstart=20)
+test6 = kmeans(scaled_values, centers=6, nstart=20)
 #print(test$cluster)
 
-plot(scaled_values, col = test$cluster,
-     main = "k-means with 5 clusters", 
+
+k2 <- as_tibble(scaled_values) %>% mutate(cluster=test2$cluster)
+k3 <- as_tibble(scaled_values)  %>% mutate(cluster=test3$cluster)
+k4 <- as_tibble(scaled_values)  %>% mutate(cluster=test4$cluster)
+k5 <- as_tibble(scaled_values) %>% mutate(cluster=test5$cluster)
+k6 <- as_tibble(scaled_values) %>% mutate(cluster=test6$cluster)
+
+
+
+
+plot(scale2,
+     col = test$cluster,
+     main = paste("K-means clustering of Congos' customers with", 4, "clusters"),
      xlab = "", ylab = "")
+
+i2 <- index.DB(k2, k2$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
+i3 <- index.DB(k3, k3$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
+i4 <- index.DB(k4, k4$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
+i5 <- index.DB(k5, k5$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
+i6 <- index.DB(k6, k5$cluster, d=NULL, centrotypes="centroids", p=2, q=2)
+
+rbind(i2$DB, i3$DB, i4$DB, i5$DB, i6$DB)
+```
+
+
+```{r}
+# Initialize total within sum of squares error: wss
+wss <- 0
+
+# For 1 to 15 cluster centers
+for (i in 1:15) {
+  test <- kmeans(scaled_values, centers = i, nstart = 20)
+  # Save total within sum of squares to wss variable
+  wss[i] <- test$tot.withinss
+}
+
+# Plot total within sum of squares vs. number of clusters
+plot(1:15, wss, type = "b", 
+     xlab = "Number of Clusters", 
+     ylab = "Within groups sum of squares")
+```
+
+```{r}
+library(cluster)
+
+
+pam_k2 <- pam(scaled_values, k = 4)
+
+# Plot the silhouette visual for the pam_k2 model
+plot(silhouette(pam_k2))
+
+# Generate a k-means model using the pam() function with a k = 3
+pam_k3 <- pam(scaled_values, k = 3)
+
+# Plot the silhouette visual for the pam_k3 model
+plot(silhouette(pam_k3))
+
+```
+```{r}
+library(purrr)
+# Use map_dbl to run many models with varying value of k
+sil_width <- map_dbl(2:10,  function(k){
+  model <- pam(x = scaled_values, k = k)
+  model$silinfo$avg.width
+})
+
+# Generate a data frame containing both k and sil_width
+sil_df <- data.frame(
+  k = 2:10,
+  sil_width = sil_width
+)
+
+# Plot the relationship between k and sil_width
+ggplot(sil_df, aes(x = k, y = sil_width)) +
+  geom_line() +
+  scale_x_continuous(breaks = 2:10)
+```
+```{r}
+Label clusters
+set.seed(42)
+
+# Build a k-means model for the customers_spend with a k of 2
+model_customers <- kmeans(customers_spend, centers = 2)
+
+# Extract the vector of cluster assignments from the model
+clust_customers <- model_customers$cluster
+
+# Build the segment_customers data frame
+segment_customers <- mutate(customers_spend, cluster = clust_customers)
+
+# Calculate the size of each cluster
+count(segment_customers, cluster)
+
+# Calculate the mean for each category
+segment_customers %>% 
+  group_by(cluster) %>% 
+  summarise_all(list(mean))
 ```
 
