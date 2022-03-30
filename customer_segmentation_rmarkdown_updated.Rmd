@@ -29,7 +29,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 # **1. Introduction**
 ***
 
-Customer segmentation is the process of separating customers into **subgroups** on the basis of their shared behavior or other attributes. The overall aim of this process is to identify a **high-value customer base**, i.e. customers that have the highest growth potential or are the most profitable.
+Customer segmentation is the process of separating customers into subgroups on the basis of their shared behavior or other attributes. The overall aim of this process is to identify a **high-value customer base**, i.e. customers that have the highest growth potential or are the most profitable.
 
 <center>
 ![](C:/Users/Leo/Desktop/Portfiolo/Customer_Segmentation_ecommerce/segmentation.gif)
@@ -47,13 +47,13 @@ The customer segmentation process allows a company to achieve many things. The m
 
 >Business Development and Marketing Teams are creating new strategies to increase substantially company's income as they are getting more investment in order to keep growing and make bigger its product catalog. 
 
->There is data from over 23 000 *Congos'* transactions made during 2018 and 2019, its first two years of acting in the e-commerce market. This valuable asset (raw data) can be converted into a powerful knowledge resource by making a customer segmentation analysis which allows company to whom direct his promotions, sales and marketing efforts. 
+>There is data from over 23,000 *Congos'* transactions made during 2018 and 2019, its first two years of acting in the e-commerce market. This valuable asset (raw data) can be converted into a powerful knowledge resource by making a customer segmentation analysis which allows who to target its promotions, sales and marketing efforts.
 
 ***
 ## 2.2. Objective
 ***
 
->The **objective** of this analysis is to model and differentiate the characteristics and typologies of *Congos'* customers, providing a potent asset to Business Development and Marketing teams in order to increase its efficiency by directing different specific strategies towards the designated segments.
+>The **objective** of this analysis is to model and differentiate the characteristics and typologies of *Congos'* customers, providing a potent asset to Business Development and Marketing teams aimed to increase its efficiency by directing different specific strategies towards the designated segments.
 
 ***
 ## 2.3. Business Benefit
@@ -82,7 +82,7 @@ The customer segmentation process allows a company to achieve many things. The m
 >To understand the customer segmentation analysis by characterizing each segment and provide recommendations based on segment profile.
 
 ***
-# 3. Methodology & Analytic Techniques Used
+# 3. **Methodology & Analytic Techniques Used**
 ***
 
   * Data understanding.
@@ -108,9 +108,10 @@ library(factoextra)
 ***
 
   * Data consists in Congos' transactions made by customers during the period of 2018-04-01 and 2019-09-28.
-  * Data was provided during a Data Analytics course. You can download it [**here.**](https://github.com/leoncasba/Customer_Segmentation_ecommerce/blob/main/Customer_Segmentation.xlsx) directly from my GitHub repository.
+  * Data was provided during a Data Analytics course. You can download it [**here,**](https://github.com/leoncasba/Customer_Segmentation_ecommerce/blob/main/Customer_Segmentation.xlsx) directly from my GitHub repository.
   * The data set has 11 columns and 23208 rows.
   * Data dictionary:
+  
     * **Transaction:** transaction unique number identifier.
     * **Year:** year transactions has been made.
     * **Month:** month transactions has been made.
@@ -129,7 +130,7 @@ library(factoextra)
 data <- read_excel("Customer_Segmentation.xlsx")
 
 #Head 5 first rows from database
-kable(head(data,5),  caption="**Table 1.** First five rows from bank database.")
+kable(head(data,5),  caption="**Table 1.** First five rows from Congos database.")
 
 ```    
 
@@ -143,8 +144,8 @@ Findings and actions:
 
   * There are not missing values on the database.
   * There are not outliers considerable to remove on the data base.
-  * Having a complete transaction date would be easier and better to manipulate for the analysis, so I proceed creating a variable called "Transaction Date".
-  * Some variables are no longer suitable for the analysis: *Year*, *Month* and *Day* (Transaction_Date has been created). I proceed eliminating those variables.
+  * Having a complete transaction date would be easier and better to manipulate for the analysis, so I proceed creating a feature called "Transaction Date".
+  * Some features are no longer suitable for the analysis: *Year*, *Month* and *Day* (Transaction_Date has been created). I proceed eliminating those features.
   
 ```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 1.** Looking for outliers.', message=FALSE, warning=FALSE}
 #Function to get percentage of missing values
@@ -154,7 +155,7 @@ NAporcent <- function(x, ndec=2){
 }
 
 #Look if there are missing values
-sum(apply(data, 2, NAporcent))
+print(paste("There are", sum(apply(data, 2, NAporcent)), "missing values."))
 
 #Outliers
 ggplot(stack(data[,-c(1,3,6,9)]), aes(x = ind, y = values,fill=ind)) + 
@@ -169,9 +170,8 @@ ggplot(stack(data[,-c(1,3,6,9)]), aes(x = ind, y = values,fill=ind)) +
 ```{r}
 #Create TransactionDate
 data$TransactionDate = ymd(paste0(data$Year,"-",data$Month,"-",data$Day))
-class(data$TransactionDate) #check is date type
 
-#Eliminating variables no longer necessary in the analysis
+#Eliminating features no longer necessary in the analysis
 data_prepared <- data[ , -c(2, 3, 4)]  
 ```
 
@@ -183,7 +183,7 @@ data_prepared <- data[ , -c(2, 3, 4)]
 
   * **How much has been sold every month by year??**
   
-As we can see on **Figure 2**, revenue differs by year but basically follows a similar pattern. Sales peak occurred during July for both years, being 2018 more successful, over passing the 800k dollars, probably product of some kind of promotion occurred during this month. Also is interestingto notice there is a gap between years on May of around 50k dollars, being more successful May 2019. Business team can replicate the success of sales strategies in this month to be implemented in further campaigns.
+As we can see on Figure 2, revenue differs by year but basically follows a similar pattern. Sales peak occurred during July for both years, being 2018 more successful, over passing the 800k dollars, probably product of some kind of promotion occurred during this month. Also is interesting to notice there is a gap between years on May of around 50k dollars, being more successful May 2019. Business team can replicate the success of sales strategies in this month to be implemented in further campaigns.
   
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 2.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
 q1 <- data_prepared %>% group_by(year(TransactionDate), month(TransactionDate)) %>% summarize(total=sum(Product_Price*Quantity)) %>% rename(Year='year(TransactionDate)', Month='month(TransactionDate)', Total=total)
@@ -194,9 +194,9 @@ ggplot(q1, aes(x=factor(Month), y=(Total/1000), group=factor(Year), colour=facto
 
   * **Which are the top 10 products by total revenue?**
   
-**Figure 3** shows top 10 products by total revenue. Highlighted in red is the top product: Laptops. It has reached a total revenue over 3 Million dollars. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting product marketing campaigns to its customers after knowing the segmentation.
+Figure 3 shows top 10 products by total revenue. Highlighted in red is the top product: Laptops. It has reached a total revenue over 3 million dollars. This simple visualization have shown which are the more profitable products in the company so far, which represents a good focus to start redirecting product marketing campaigns to electronic consumers after knowing the segmentation.
   
-```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 3.** Total Revenue per Month ($).', message=FALSE, warning=FALSE}
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 3.** Top 10 products by total revenue.', message=FALSE, warning=FALSE}
 q3 <- data_prepared %>% group_by(Product_Name) %>% summarise(Total_Revenue_by_Product=sum(Product_Price*Quantity)/1000) %>% arrange(desc(Total_Revenue_by_Product)) %>% top_n(10)
 
 ggplot(q3, aes(x=reorder(factor(Product_Name),Total_Revenue_by_Product), y=Total_Revenue_by_Product, fill = ifelse(Product_Name == "Laptop", "Highlighted", "Normal") ))+geom_col()+theme_classic(base_size = 18)+coord_flip()+theme(legend.position = "none", axis.title.y = element_blank())+labs(y="Total revenue by product ($ thousands)")
@@ -219,9 +219,9 @@ ggplot(data_prepared, aes(Age))+geom_histogram(aes(y = ..density..), colour = 1,
 
 Recency Frequency Monetary (RFM) analysis allows to segment customers by the frequency and value of purchases and identify those customers who spend the most money.
 
-  * **Recency** means how long it’s been since a customer bought any product (**days**).
-  * **Frequency** represents how often a customer buys  (**number of purchases**).
-  * **Monetary value** is the total value of purchases a customer has made (**total amount in $**).
+  * **Recency** means how long it’s been since a customer bought any product (days).
+  * **Frequency** represents how often a customer buys (number of purchases in a period of time).
+  * **Monetary value** is the total value of purchases a customer has made (total amount in dollars).
   
 ```{r}
 NOW=max(data_prepared$TransactionDate)
@@ -242,9 +242,7 @@ I assigned a quantile "score" from 1 to 4 to each *Recency*, *Frequency* and *Mo
 
   * 4 is the highest value (customers is on the top of the evaluated value), and 1 is the lowest value (customer is on the bottom of the evaluated value).
   * A final RFM score (Overall Value) is calculated simply by concatenating individual RFM score numbers:
-
-
-  
+<br><br>
 $$RFM \ Score = R_{quartile} + F_{quartile} + M_{quartile}$$
 
 
@@ -262,7 +260,7 @@ The table below (adapted from [**here.**](https://runawayhorse001.github.io/Lear
 </center>
 
 
-Now it is possible to categorize each customer by its respective segment. **Figure 3** shows number of customers by segment, where "Others" category represents most of the customers (607). Those will be approached in the next step of the analysis by performing a segmentation with K-means. In the mean time let's focus on Figure 5 which provide an overview of what is the distribution of our customers properly categorized on the different categories displayed.
+Now it is possible to categorize each customer by its respective segment. Figure 5 shows number of customers by segment, however, "Others" category represents most of the customers (607), which was not showed on the plot to focus on the customers truly categorized. Those uncategorized will be approached in the next step of the analysis by performing a segmentation with K-means. In the mean time let's focus on figure below which provide an overview of what is the distribution of our customers properly categorized on the different segments displayed.
 
 
 ```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 5.** Number of customers by RFM segment (Excluding Category "Others").', message=FALSE, warning=FALSE}
@@ -289,7 +287,7 @@ ggplot(group[-6,], aes(x=Category, y=N_Customers))+geom_col(fill = "#0073C2FF")+
 
 ***
 
-From previous RFM analysis we assume there about 5 subgroup of customers, however, there is a big amount of customers who remains in the "Other" category. 
+From previous RFM analysis we assume there are about 5 subgroup of customers, however, there is a big amount of customers who remains in the "Other" category. 
 
 K-means comes to provide a solution by grouping all the customers in their respective subgroups according with their homogeneous properties. This algorithm is an unsupervised machine learning method used to find homogeneous subgroups within a population. 
 
@@ -297,6 +295,8 @@ To process the learning data, the K-means algorithm starts with a first group of
 
   * The centroids have stabilized — there is no change in their values because the clustering has been successful.
   * The defined number of iterations has been achieved.
+
+For further information about how the algorithm works you can check this useful [**article**](https://towardsdatascience.com/k-means-clustering-explained-4528df86a120).
 
 ***
 
@@ -324,7 +324,7 @@ ggplot(data = pivot, aes(x=name, y=value)) +
 As we can see on the figures below Frequency and Monetary Value have normal distribution, however recency is right-skewed as I assumed on the previous analysis. This means, data will need a transformation in order to use on further K-means algorithm.
 
 
-```{r, , fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 7.** Checking variables distribution.', message=FALSE, warning=FALSE}
+```{r, out.width=c('100%', '100%', '100%'), fig.show='hold' , fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 7.** Checking variables distribution.', message=FALSE, warning=FALSE}
 #Check distribution of each variable
 ggplot(RFM, aes(Recency))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
                fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Recency distribution")
@@ -335,11 +335,13 @@ ggplot(RFM, aes(Frequency))+geom_histogram(aes(y = ..density..), colour = 1, fil
 ggplot(RFM, aes(Monetary))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
                fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Monetary Value distribution")
 ```
- 
-```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 8.** Checking log transformed Recency data.', message=FALSE, warning=FALSE}
-#Checking distribution on log transformed recency data.  I added a small constant as log transformation demands all the values to be positive.
+
+I transformed recency data using a natural algorithm and added a small constant as log transformation demands all the values to be positive.
+
+```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 8.** Recency data distribution after transformation.', message=FALSE, warning=FALSE}
+#Checking distribution on log transformed recency data. 
 ggplot(RFM, aes(log10(Recency+1)))+geom_histogram(aes(y = ..density..), colour = 1, fill = "white")+geom_density(lwd = 1, colour = 4,
-               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)
+               fill = 4, alpha = 0.25)+theme_classic(base_size = 18)+ggtitle("Recency (transformed) distribution")
 
 #Creating matrix for next step: scaling
 RFM_2 <- cbind(RFM[, c(3,4)], (log10(RFM$Recency+1)))
@@ -347,15 +349,14 @@ RFM_2 <- cbind(RFM[, c(3,4)], (log10(RFM$Recency+1)))
 
   * **Variables are on the same scale.**
   
-Since K-means algorithm works with euclidean distances we need to escalate the data. It means transforming data in order the mean is equal 0 and the standard deviation equal 1.
+Since K-means algorithm works with euclidean distances we need to escalate the data. It means transforming data input features in order the mean is equal 0 and the standard deviation equal 1.
 
 ```{r}
 #Scale values
 scaled_values <- apply(RFM_2, 2, scale, center = TRUE, scale = TRUE)
 
 #Check if are correctly scaled.
-round(apply(scaled_values, 2, mean))
-apply(scaled_values, 2, sd)
+paste("Scaled values of Recency, Frequency and Monetary value have mean equal", mean(round(apply(scaled_values, 2, mean))), "and standard deviation equal", mean(apply(scaled_values, 2, sd)))
 ```
 
 ***
@@ -426,7 +427,7 @@ kable(DB_index_, digits=2, col.names=c("DB index", "Number of clusters"), captio
 
 When using the the silhouette analysis we are normally looking for a value of k that provides the high average silhouette score, in this case the figure shows is k=2. However, I will follow to logic presented by the previous two metrics which make more sense on the context of the problem I'm solving.
 
-```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 8.** Silhouette method for optimum K.', message=FALSE, warning=FALSE}
+```{r, fig.align='center', fig.height=5, fig.width=9,fig.cap = '**Figure 10.** Silhouette method for optimum K.', message=FALSE, warning=FALSE}
 fviz_nbclust(scaled_values, pam, method = "silhouette")+ theme_classic()
 ```
 
@@ -466,7 +467,7 @@ RFM_final <- RFM_k_clusters[,-1] %>%
   summarise_all(list(mean)) %>% mutate(N=count$n, Percentage=((count$n)/sum(count$n)*100))
 ```
 
-```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 10.** Number of customer by K-means cluster.', message=FALSE, warning=FALSE}
+```{r, fig.align='center', fig.height=7, fig.width=14,fig.cap = '**Figure 11.** Number of customers by K-means cluster.', message=FALSE, warning=FALSE}
 RFM_final$Cluster <- factor(RFM_final$Cluster,                                   
                   levels = RFM_final$Cluster[order(RFM_final$N, decreasing = TRUE)])
 
@@ -484,18 +485,29 @@ This is the interpretation provided to the clusters based on average metrics:
 
   * **Cluster 3** has 30.43% of the total of customers. It can be interpreted as "Almost Lost Customers". They haven't purchased for some time (F=3) but purchased frequently (F=3) and spend good money (M=3).
 
-  * "**Cluster 4** has 29,34% of the total customers. It belongs to the "Lost Cheap Customers" segment which is characterized by their last purchase is long ago (R=4), purchased very few (F=1) and spent little money (M=1).
+  * **Cluster 4** has 29,34% of the total customers. It belongs to the "Lost Cheap Customers" segment which is characterized by their last purchase is long ago (R=4), purchased very few (F=1) and spent little money (M=1).
   
 
 # **4. Recommendations**
 ***
 
-  * Recommendation for “Best Customers" segment: Upsell higher value products. Ask for reviews. Engage and reward them, they can be early adopters for new products and will promote the company's brand.
+  * **Recommendation for “Best Customers" segment:** Upsell higher value products. Ask for reviews. Engage and reward them, they can be early adopters for new products and will promote the company's brand.
   
-  * Recommendation for “Recent but Promising Customers" segment: Create brand awareness, offer promotions. Provide on-boarding support, give them early success and start building relationship.
+  * **Recommendation for “Recent but Promising Customers" segment:** Create brand awareness, offer promotions. Provide on-boarding support, give them early success and start building relationship.
   
-   * Recommendation for “Almost Lost" segment: This customer segment is very at risk for churn, so focus on activating customers and making repurchases by forming a reactivation and retention strategy. Send personalized emails to reconnect, offer renewals, provide helpful resources. We need to bring them back!
+   * **Recommendation for “Almost Lost" segment:** This customer segment is very at risk for churn, so focus on activating customers and making repurchases by forming a reactivation and retention strategy. Send personalized emails to reconnect, offer renewals, provide helpful resources. We need to bring them back!
    
-  * Recommendation for “Lost Cheap Customers" segment: This customer segment probably has churned, so the focus of the campaign is to reactivate the customer by forming a reactivation strategy. We try to revive interest, however if they does not show up is better to ignore and focus on more profitable typology of customer.
+  * **Recommendation for “Lost Cheap Customers" segment**: This customer segment probably has churned, so the focus of the campaign is to reactivate the customer by forming a reactivation strategy. We try to revive interest, however if they does not show up is better to ignore and focus on more profitable typology of customer.
+
+***
+<center>
+>This is a work made by
+
+<center>
+![](C:/Users/Leo/Documents/themes/raditian-free-hugo-theme-data-science/static/img/logo_small.png)
+
+>*I appreciate your valuable feedback and suggestions. Go check my porfolio [**here.**](https://leon-datascience.netlify.app/)*
+
+***
 
 
